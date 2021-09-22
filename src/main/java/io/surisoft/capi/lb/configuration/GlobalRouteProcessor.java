@@ -244,7 +244,7 @@ public class GlobalRouteProcessor extends RouteBuilder {
         for(Api api : apiList) {
             List<RouteDefinition> routeDefinitionList = routeDefinition(api);
             for(RouteDefinition routeDefinition : routeDefinitionList) {
-                String routeId = api.getName() + "||" + UUID.randomUUID().toString();
+                String routeId = routeUtils.getRouteId(api, routeUtils.getMethodFromRoute(routeDefinition)); //api.getName() + "||" + UUID.randomUUID().toString();
                 log.trace("Trying to build and deploy route {}, from CAPI member {}", routeId, runningApiManager.getMemberPublicAddress());
                 routeUtils.buildOnExceptionDefinition(routeDefinition, false, false, false, routeId);
                  if(api.isFailoverEnabled()) {

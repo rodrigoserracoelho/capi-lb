@@ -215,7 +215,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 @Component
 @Slf4j
@@ -258,6 +260,21 @@ public class RunningApiManager {
         } else {
             return null;
         }
+    }
+
+    public Collection<RunningApi> getRunningApiByApiDefinition(Api api) {
+        List<RunningApi> runningApiList = new ArrayList<>();
+        Collection<RunningApi> allApi = getCachedApi().values();
+        for(RunningApi runningApi : allApi) {
+            if(runningApi.getApiId().equals(api.getId())) {
+                runningApiList.add(runningApi);
+            }
+        }
+        return runningApiList;
+    }
+
+    public void deleteRunningApi(RunningApi runningApi) {
+        getCachedApi().remove(runningApi.getRouteId());
     }
 
     public Collection<RunningApi> getRunningApi() {

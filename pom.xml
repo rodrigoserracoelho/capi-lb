@@ -225,6 +225,7 @@
     <com.google.cloud.tools-version>2.2.0</com.google.cloud.tools-version>
     <org.apache.camel.springboot-version>3.11.2</org.apache.camel.springboot-version>
     <io.hawt.version>2.13.6</io.hawt.version>
+    <io.micrometer-version>1.7.4</io.micrometer-version>
 
   </properties>
 
@@ -357,6 +358,32 @@
     </dependency>
 
     <dependency>
+      <groupId>org.apache.camel.springboot</groupId>
+      <artifactId>camel-metrics-starter</artifactId>
+      <version>${org.apache.camel.springboot-version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-management</artifactId>
+      <version>${org.apache.camel.springboot-version}</version>
+    </dependency>
+    <!-- Metrics-->
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+      <version>${io.micrometer-version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-micrometer</artifactId>
+      <version>${org.apache.camel.springboot-version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-jmx</artifactId>
+      <version>${io.micrometer-version}</version>
+    </dependency>
+    <dependency>
         <groupId>com.nimbusds</groupId>
         <artifactId>nimbus-jose-jwt</artifactId>
         <version>8.2</version>
@@ -370,6 +397,22 @@
         <configuration>
           <source>14</source>
           <target>14</target>
+          <compilerArgs>
+            <arg>--add-modules</arg>
+            <arg>java.se</arg>
+            <arg>--add-exports</arg>
+            <arg>java.base/jdk.internal.ref=ALL-UNNAMED</arg>
+            <arg>--add-opens</arg>
+            <arg>java.base/java.lang=ALL-UNNAMED</arg>
+            <arg>--add-opens</arg>
+            <arg>java.base/java.nio=ALL-UNNAMED</arg>
+            <arg>--add-opens</arg>
+            <arg>java.base/sun.nio.ch=ALL-UNNAMED</arg>
+            <arg>--add-opens</arg>
+            <arg>java.management/sun.management=ALL-UNNAMED</arg>
+            <arg>--add-opens</arg>
+            <arg>jdk.management/com.sun.management.internal=ALL-UNNAMED</arg>
+          </compilerArgs>
           <forceJavacCompilerUse>true</forceJavacCompilerUse>
         </configuration>
       </plugin>

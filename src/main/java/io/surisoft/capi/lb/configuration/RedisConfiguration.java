@@ -206,8 +206,16 @@
 package io.surisoft.capi.lb.configuration;
 
 import com.hazelcast.config.Config;
+import io.micrometer.core.instrument.Clock;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.micrometer.core.instrument.util.HierarchicalNameMapper;
+import io.micrometer.jmx.JmxMeterRegistry;
 import io.surisoft.capi.lb.cache.CapiCacheConfig;
+import io.surisoft.capi.lb.utils.Constants;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.camel.component.micrometer.CamelJmxConfig;
+import org.apache.camel.component.micrometer.DistributionStatisticConfigFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -215,6 +223,12 @@ import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+import java.time.Duration;
+
+import static org.apache.camel.component.micrometer.MicrometerConstants.DISTRIBUTION_SUMMARIES;
+import static org.apache.camel.component.micrometer.messagehistory.MicrometerMessageHistoryNamingStrategy.MESSAGE_HISTORIES;
+import static org.apache.camel.component.micrometer.routepolicy.MicrometerRoutePolicyNamingStrategy.ROUTE_POLICIES;
 
 @Configuration
 @Slf4j
@@ -247,5 +261,33 @@ public class RedisConfiguration {
     @Bean
     public Config hazelCastConfig() {
         return new CapiCacheConfig(true, redisTemplate());
+    }
+
+    @Bean
+    public CompositeMeterRegistry metrics() {
+        DistributionStatisticConfigFilter timerMeterFilter = new DistributionStatisticConfigFilter()
+                .andAppliesTo(ROUTE_POLICIES)
+                .orAppliesTo(MESSAGE_HISTORIES)
+                .setPublishPercentileHistogram(true)
+                .setMinimumExpectedDuration(Duration.ofMillis(1L))
+                .setMaximumExpectedDuration(Duration.ofMillis(150L));
+
+        DistributionStatisticConfigFilter summaryMeterFilter = new DistributionStatisticConfigFilter()
+                .andAppliesTo(DISTRIBUTION_SUMMARIES)
+                .setPublishPercentileHistogram(true)
+                .setMinimumExpectedValue(1L)
+                .setMaximumExpectedValue(100L);
+
+
+        CompositeMeterRegistry compositeMeterRegistry = new CompositeMeterRegistry();
+        compositeMeterRegistry.config().commonTags(Tags.of("application", Constants.APPLICATION_NAME))
+                .meterFilter(timerMeterFilter)
+                .meterFilter(summaryMeterFilter).namingConvention().tagKey(Constants.APPLICATION_NAME);
+
+        compositeMeterRegistry.add(new JmxMeterRegistry(
+                CamelJmxConfig.DEFAULT,
+                Clock.SYSTEM,
+                HierarchicalNameMapper.DEFAULT));
+        return compositeMeterRegistry;
     }
 }

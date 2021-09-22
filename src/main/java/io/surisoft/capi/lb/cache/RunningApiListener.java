@@ -207,6 +207,8 @@ package io.surisoft.capi.lb.cache;
 
 import com.hazelcast.core.EntryEvent;
 import com.hazelcast.map.listener.EntryAddedListener;
+import com.hazelcast.map.listener.EntryEvictedListener;
+import com.hazelcast.map.listener.EntryRemovedListener;
 import com.hazelcast.map.listener.EntryUpdatedListener;
 import io.surisoft.capi.lb.configuration.SingleRouteProcessor;
 import io.surisoft.capi.lb.schema.Api;
@@ -220,7 +222,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
-public class RunningApiListener implements EntryAddedListener<String, RunningApi>, EntryUpdatedListener<String, RunningApi> {
+public class RunningApiListener implements EntryEvictedListener<String, RunningApi>, EntryRemovedListener<String, RunningApi>, EntryAddedListener<String, RunningApi>, EntryUpdatedListener<String, RunningApi> {
 
     @Autowired
     private CamelContext camelContext;
@@ -238,21 +240,21 @@ public class RunningApiListener implements EntryAddedListener<String, RunningApi
     public void entryUpdated(EntryEvent<String, RunningApi> event) {
         if(event.getValue() != null) {
             RunningApi runningApi = event.getValue();
-            /*if(runningApi.isRemoved() && runningApi.isDisabled()) {
-                log.info( "API detected for suspension: {}", runningApi.getRouteId());
-                camelUtils.suspendRoute(runningApi);
-                camelUtils.addSuspendedRoute(runningApi);
-            } else {
-                log.info( "API detected for reactivation: {}", runningApi.getRouteId());
-                camelUtils.suspendRoute(runningApi);
-                camelUtils.addActiveRoute(runningApi);
-            }*/
+            log.info("Removing route: {} for updating", runningApi.getRouteId());
+            try {
+                camelContext.getRouteController().stopRoute(runningApi.getRouteId());
+                camelContext.removeRoute(runningApi.getRouteId());
+                Api api = (Api) redisTemplate.opsForHash().get(Api.CLIENT_KEY, event.getValue().getApiId());
+                camelContext.addRoutes(new SingleRouteProcessor(camelContext, api, routeUtils, runningApiManager));
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }
     }
 
     @Override
     public void entryAdded(EntryEvent<String, RunningApi> entryEvent) {
-        log.info("NEW ENTRY DETECTED: {}", entryEvent.getMember().localMember());
+        log.trace("New entry detected: {}", entryEvent.getMember().localMember());
         if(!entryEvent.getMember().localMember()) {
             try {
                 Api api = (Api) redisTemplate.opsForHash().get(Api.CLIENT_KEY, entryEvent.getValue().getApiId());
@@ -263,5 +265,26 @@ public class RunningApiListener implements EntryAddedListener<String, RunningApi
         } else {
             log.trace("New entry was deployed by this CAPI instance, skipping Camel Route.");
         }
+    }
+
+    @Override
+    public void entryRemoved(EntryEvent<String, RunningApi> event) {
+        log.info("Removed route: {}", event.getOldValue().getRouteId());
+        if(event.getOldValue() != null) {
+            RunningApi runningApi = event.getOldValue();
+            log.info("Removing route: {}", runningApi.getRouteId());
+            try {
+                camelContext.getRouteController().stopRoute(runningApi.getRouteId());
+                camelContext.removeRoute(runningApi.getRouteId());
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
+        }
+    }
+
+    @Override
+    public void entryEvicted(EntryEvent<String, RunningApi> event) {
+        log.info("Evicted route: {}", event.getOldValue().getRouteId());
+
     }
 }

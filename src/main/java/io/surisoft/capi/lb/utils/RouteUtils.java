@@ -209,18 +209,22 @@ import io.surisoft.capi.lb.processor.HttpErrorProcessor;
 import io.surisoft.capi.lb.schema.Api;
 import io.surisoft.capi.lb.schema.HttpMethod;
 import io.surisoft.capi.lb.schema.Mapping;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.model.RouteDefinition;
 import org.apache.camel.model.rest.*;
+import org.apache.camel.util.json.JsonObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 import static org.apache.camel.language.constant.ConstantLanguage.constant;
 
 @Component
+@Slf4j
 public class RouteUtils {
 
     @Value("${capi.gateway.error.endpoint}")
@@ -290,6 +294,14 @@ public class RouteUtils {
             return HttpMethod.DELETE;
         }
         return null;
+    }
+
+    public String getRouteId(Api api, HttpMethod httpMethod) {
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.put("apiName", api.getName());
+        jsonObject.put("apiContext", api.getContext());
+        jsonObject.put("httpMethod", httpMethod);
+        return new String(Base64.getEncoder().encode(jsonObject.toJson().getBytes()));
     }
 
 }
