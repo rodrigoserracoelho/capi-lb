@@ -205,6 +205,7 @@
 
 package io.surisoft.capi.lb.utils;
 
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.surisoft.capi.lb.processor.HttpErrorProcessor;
 import io.surisoft.capi.lb.schema.Api;
 import io.surisoft.capi.lb.schema.HttpMethod;
@@ -235,6 +236,13 @@ public class RouteUtils {
 
     @Autowired
     private HttpUtils httpUtils;
+
+    @Autowired
+    private CompositeMeterRegistry meterRegistry;
+
+    public void registerMetric(String routeId) {
+        meterRegistry.counter(routeId);
+    }
 
     public void buildOnExceptionDefinition(RouteDefinition routeDefinition,
                                            boolean isZipkinTraceIdVisible,

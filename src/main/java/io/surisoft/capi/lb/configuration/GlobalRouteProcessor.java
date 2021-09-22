@@ -253,14 +253,15 @@ public class GlobalRouteProcessor extends RouteBuilder {
                             .failover(api.getMaximumFailoverAttempts(), false, api.isRoundRobinEnabled(), false)
                             .to(routeUtils.buildEndpoints(api))
                             .routeId(routeId);
-                     runningApiManager.runApi(routeId, api, routeUtils.getMethodFromRoute(routeDefinition));
+                    routeUtils.registerMetric(routeId);
+                    runningApiManager.runApi(routeId, api, routeUtils.getMethodFromRoute(routeDefinition));
                 } else {
                      routeDefinition
                              .loadBalance()
                              .roundRobin()
                              .to(routeUtils.buildEndpoints(api))
                              .routeId(routeId);
-                     DescriptionDefinition f = new DescriptionDefinition();
+                     routeUtils.registerMetric(routeId);
                      runningApiManager.runApi(routeId, api, routeUtils.getMethodFromRoute(routeDefinition));
                  }
 

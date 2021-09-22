@@ -247,6 +247,7 @@ public class SingleRouteProcessor extends RouteBuilder {
                         .to(routeUtils.buildEndpoints(api))
                         .end()
                         .routeId(routeId);
+                 routeUtils.registerMetric(routeId);
             } else {
                  routeDefinition
                          .loadBalance()
@@ -254,6 +255,7 @@ public class SingleRouteProcessor extends RouteBuilder {
                          .to(routeUtils.buildEndpoints(api))
                          .end()
                          .routeId(routeId);
+                 routeUtils.registerMetric(routeId);
              }
             runningApiManager.runApi(routeId, api, routeUtils.getMethodFromRoute(routeDefinition));
         }
