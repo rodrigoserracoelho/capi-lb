@@ -206,6 +206,7 @@
 package io.surisoft.capi.lb.processor;
 
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
+import io.micrometer.core.instrument.search.RequiredSearch;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
@@ -219,14 +220,11 @@ public class MetricsProcessor implements Processor {
     @Autowired
     private CompositeMeterRegistry meterRegistry;
 
-
-
     @Override
     public void process(Exchange exchange) {
-       /* if(exchange.getIn().getHeader("CamelServletContextPath") != null && exchange.getIn().getHeader(Exchange.HTTP_METHOD) != null) {
-            String metricName = camelUtils.normalizeRouteId(exchange.getIn().getHeader("CamelServletContextPath").toString().substring(1) + "-" + exchange.getIn().getHeader(Exchange.HTTP_METHOD));
-            RequiredSearch s = meterRegistry.get(metricName);
-            s.counter().increment();
-        }*/
+        if(exchange.getFromRouteId() != null) {
+            RequiredSearch requiredSearch = meterRegistry.get(exchange.getFromRouteId());
+            requiredSearch.counter().increment();
+        }
     }
 }

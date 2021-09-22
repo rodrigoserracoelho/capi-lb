@@ -206,6 +206,7 @@
 package io.surisoft.capi.lb.configuration;
 
 import io.surisoft.capi.lb.cache.RunningApiManager;
+import io.surisoft.capi.lb.processor.MetricsProcessor;
 import io.surisoft.capi.lb.schema.Api;
 import io.surisoft.capi.lb.schema.RunningApi;
 import io.surisoft.capi.lb.utils.RouteUtils;
@@ -237,6 +238,8 @@ public class GlobalRouteProcessor extends RouteBuilder {
     @Autowired
     private RunningApiManager runningApiManager;
 
+    @Autowired
+    private MetricsProcessor metricsProcessor;
 
     @Override
     public void configure() {
@@ -249,6 +252,7 @@ public class GlobalRouteProcessor extends RouteBuilder {
                 routeUtils.buildOnExceptionDefinition(routeDefinition, false, false, false, routeId);
                  if(api.isFailoverEnabled()) {
                     routeDefinition
+                            .process(metricsProcessor)
                             .loadBalance()
                             .failover(api.getMaximumFailoverAttempts(), false, api.isRoundRobinEnabled(), false)
                             .to(routeUtils.buildEndpoints(api))
@@ -257,6 +261,7 @@ public class GlobalRouteProcessor extends RouteBuilder {
                     runningApiManager.runApi(routeId, api, routeUtils.getMethodFromRoute(routeDefinition));
                 } else {
                      routeDefinition
+                             .process(metricsProcessor)
                              .loadBalance()
                              .roundRobin()
                              .to(routeUtils.buildEndpoints(api))
