@@ -235,4 +235,5 @@ public class Constants {
     public static final String CAPI_INTERNAL_REST_ERROR_PATH = "/capi-error";
     public static final String CAPI_URL_IN_ERROR = "HTTP_URL";
     public static final String CAPI_URI_IN_ERROR = "HTTP_URI";
+    public static final String MATCH_ON_URI_PREFIX = "?matchOnUriPrefix=";
 }

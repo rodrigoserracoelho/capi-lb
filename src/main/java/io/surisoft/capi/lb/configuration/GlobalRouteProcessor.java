@@ -209,6 +209,7 @@ import io.surisoft.capi.lb.cache.RunningApiManager;
 import io.surisoft.capi.lb.processor.MetricsProcessor;
 import io.surisoft.capi.lb.schema.Api;
 import io.surisoft.capi.lb.schema.RunningApi;
+import io.surisoft.capi.lb.utils.Constants;
 import io.surisoft.capi.lb.utils.RouteUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.builder.RouteBuilder;
@@ -279,22 +280,22 @@ public class GlobalRouteProcessor extends RouteBuilder {
         List<RouteDefinition> routeDefinitionList = new ArrayList<>();
         switch (api.getHttpMethod()) {
             case ALL:
-                routeDefinitionList.add(rest().get(routeUtils.buildFrom(api) + "?matchOnUriPrefix=" + api.isMatchOnUriPrefix()).route());
-                routeDefinitionList.add(rest().post(routeUtils.buildFrom(api) + "?matchOnUriPrefix=" + api.isMatchOnUriPrefix()).route());
-                routeDefinitionList.add(rest().put(routeUtils.buildFrom(api) + "?matchOnUriPrefix=" + api.isMatchOnUriPrefix()).route());
-                routeDefinitionList.add(rest().delete(routeUtils.buildFrom(api) + "?matchOnUriPrefix=" + api.isMatchOnUriPrefix()).route());
+                routeDefinitionList.add(rest().get(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route());
+                routeDefinitionList.add(rest().post(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route());
+                routeDefinitionList.add(rest().put(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route());
+                routeDefinitionList.add(rest().delete(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route());
                 break;
             case GET:
-                routeDefinitionList.add(rest().get(routeUtils.buildFrom(api) + "?matchOnUriPrefix=" + api.isMatchOnUriPrefix()).route());
+                routeDefinitionList.add(rest().get(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route());
                 break;
             case POST:
-                routeDefinitionList.add(rest().post(routeUtils.buildFrom(api) + "?matchOnUriPrefix=" + api.isMatchOnUriPrefix()).route());
+                routeDefinitionList.add(rest().post(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route());
                 break;
             case PUT:
-                routeDefinitionList.add(rest().put(routeUtils.buildFrom(api) + "?matchOnUriPrefix=" + api.isMatchOnUriPrefix()).route());
+                routeDefinitionList.add(rest().put(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route());
                 break;
             case DELETE:
-                routeDefinitionList.add(rest().delete(routeUtils.buildFrom(api) + "?matchOnUriPrefix=" + api.isMatchOnUriPrefix()).route());
+                routeDefinitionList.add(rest().delete(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route());
                 break;
         }
         return routeDefinitionList;

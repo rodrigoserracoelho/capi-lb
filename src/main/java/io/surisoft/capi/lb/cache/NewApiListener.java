@@ -221,15 +221,6 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class NewApiListener implements EntryAddedListener<String, Api>, EntryRemovedListener<String, Api>, EntryUpdatedListener<String, Api> {
 
-    @Autowired
-    private CamelContext camelContext;
-
-    //@Autowired
-    //private CamelUtils camelUtils;
-
-
-    //@Autowired
-    //private RunningApiManager runningApiManager;
 
     @Override
     public void entryAdded( EntryEvent<String, Api> event ) {
@@ -250,34 +241,12 @@ public class NewApiListener implements EntryAddedListener<String, Api>, EntryRem
         addRunTimeApi(entryEvent.getValue());
     }
 
+
     private void removeRunTimeApi(Api api) {
-        /*try {
-            List<RunningApi> runningApis = runningApiManager.getRunningApiForApi(api.getId());
-            for(RunningApi runningApi : runningApis) {
-                if(api.getThrottlingPolicy() != null) {
-                    throttlingManager.removeThrottlingByRouteID(runningApi.getRouteId());
-                }
-                if(camelContext.getRoute(runningApi.getRouteId()) != null) {
-                    camelContext.getRouteController().stopRoute(runningApi.getRouteId());
-                    camelContext.removeRoute(runningApi.getRouteId());
-                }
-                runningApiManager.removeRunningApi(runningApi);
-            }
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }*/
+        log.info("TODO: Removing API: {}", api.getId());
     }
 
     private void addRunTimeApi(Api api) {
-        /*try {
-            removeRunTimeApi(api);
-            if(api.getSwaggerEndpoint() == null) {
-                camelContext.addRoutes(new SimpleRestRouteRepublisher(camelContext, camelUtils, grafanaDashboardBuilder, throttlingManager, api));
-            } else {
-                camelContext.addRoutes(new SwaggerRoutePublisher(camelContext, camelUtils, grafanaDashboardBuilder, throttlingManager, swaggerParser, api));
-            }
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }*/
+        log.info("TODO: Add Runtime API: {}", api.getId());
     }
 }

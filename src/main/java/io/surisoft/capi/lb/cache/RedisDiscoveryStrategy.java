@@ -226,7 +226,6 @@ public class RedisDiscoveryStrategy extends AbstractDiscoveryStrategy {
     private RedisTemplate redisTemplate;
 
     private final DiscoveryNode thisNode;
-    private final ILogger logger;
 
     private CapiNode capiNode = new CapiNode();
 
@@ -235,7 +234,6 @@ public class RedisDiscoveryStrategy extends AbstractDiscoveryStrategy {
         super(logger, properties);
         this.redisTemplate = redisTemplate;
         this.thisNode = discoveryNode;
-        this.logger = logger;
     }
 
     @Override
