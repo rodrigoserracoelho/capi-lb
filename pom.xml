@@ -388,7 +388,8 @@
         <artifactId>nimbus-jose-jwt</artifactId>
         <version>8.2</version>
     </dependency>
-    <dependency>
+    <!-- Testing only-->
+    <!--dependency>
       <groupId>io.surisoft.capi.lb</groupId>
       <artifactId>capi-discovery-spring-boot-starter</artifactId>
       <version>0.0.1</version>
