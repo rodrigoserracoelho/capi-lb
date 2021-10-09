@@ -393,7 +393,7 @@
       <groupId>io.surisoft.capi.lb</groupId>
       <artifactId>capi-discovery-spring-boot-starter</artifactId>
       <version>0.0.1</version>
-    </dependency>
+    </dependency-->
   </dependencies>
   <build>
     <plugins>
