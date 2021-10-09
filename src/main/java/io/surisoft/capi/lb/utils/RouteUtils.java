@@ -270,8 +270,7 @@ public class RouteUtils {
     public String[] buildEndpoints(Api api) {
         List<String> transformedEndpointList = new ArrayList<>();
         for(Mapping mapping : api.getMappingList()) {
-            //endpoint = pathHasParams ? protocol + endpoint + Constants.HTTP4_CALL_PARAMS : protocol + endpoint + httpUtils.setPath(path) + Constants.HTTP4_CALL_PARAMS;
-            String endpoint = api.getHttpProtocol() + "://" + mapping.getHostname() + ":" + mapping.getPort() + mapping.getRootContext() + "?bridgeEndpoint=true&throwExceptionOnFailure=false";
+            String endpoint = api.getHttpProtocol().getProtocol() + "://" + mapping.getHostname() + ":" + mapping.getPort() + mapping.getRootContext() + "?bridgeEndpoint=true&throwExceptionOnFailure=false";
             if(api.getConnectTimeout() > -1) {
                 endpoint = httpUtils.setHttpConnectTimeout(endpoint, api.getConnectTimeout());
             }

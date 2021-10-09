@@ -206,5 +206,19 @@
 package io.surisoft.capi.lb.schema;
 
 public enum HttpProtocol {
-    http,https
+    HTTP("http"),
+    HTTPS("https");
+
+    private String protocol;
+    HttpProtocol(String protocol) {
+        this.protocol = protocol;
+    }
+
+    public String getProtocol() {
+        return this.protocol;
+    }
+
+    public void setProtocol(String protocol) {
+        this.protocol = protocol;
+    }
 }

@@ -208,7 +208,7 @@ package io.surisoft.capi.lb.schema;
 import lombok.Data;
 
 @Data
-public class CapiRestException {
+public class CapiRestError {
     private String routeID;
     private String errorMessage;
     private int errorCode;
