@@ -215,7 +215,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class HttpErrorProcessor implements Processor {
     @Override
-    public void process(Exchange exchange) throws Exception {
+    public void process(Exchange exchange) {
         exchange.getIn().setHeader(Constants.CAPI_URI_IN_ERROR, exchange.getIn().getHeader(Exchange.HTTP_URI).toString());
         exchange.getIn().setHeader(Constants.CAPI_URL_IN_ERROR, exchange.getIn().getHeader(Exchange.HTTP_URL).toString());
     }

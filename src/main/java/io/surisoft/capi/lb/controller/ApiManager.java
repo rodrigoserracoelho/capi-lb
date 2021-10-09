@@ -220,8 +220,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/manager/api")
@@ -257,7 +255,6 @@ public class ApiManager {
            }
            redisTemplate.opsForHash().delete(Api.CLIENT_KEY, api.getId());
         }
-
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

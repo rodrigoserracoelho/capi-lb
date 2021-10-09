@@ -239,10 +239,13 @@ public class ErrorController {
 
     private ResponseEntity<CapiRestException> buildResponse(HttpServletRequest request) {
 
-        String routeId = request.getHeader(Constants.ROUTE_ID_HEADER);
         CapiRestException capiRestException = new CapiRestException();
 
         String errorMessage =  request.getHeader(Constants.REASON_MESSAGE_HEADER);
+
+        if(request.getHeader(Constants.ROUTE_ID_HEADER) != null) {
+            capiRestException.setRouteID(request.getHeader(Constants.ROUTE_ID_HEADER));
+        }
 
         if(request.getHeader(Constants.CAPI_URI_IN_ERROR) != null) {
           capiRestException.setHttpUri(request.getHeader(Constants.CAPI_URI_IN_ERROR));
@@ -272,8 +275,6 @@ public class ErrorController {
         } else {
             capiRestException.setErrorCode(HttpStatus.SERVICE_UNAVAILABLE.value());
         }
-
-        capiRestException.setRouteID(request.getHeader(Constants.ROUTE_ID_HEADER));
         return new ResponseEntity<>(capiRestException, HttpStatus.valueOf(capiRestException.getErrorCode()));
     }
 }

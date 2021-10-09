@@ -216,7 +216,6 @@ import org.apache.camel.model.RouteDefinition;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 public class SingleRouteProcessor extends RouteBuilder {

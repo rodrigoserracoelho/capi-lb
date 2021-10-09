@@ -239,8 +239,6 @@ public class RouteManager {
                 log.error(e.getMessage(), e);
             }
         }
-
-
         return new ResponseEntity<>(HttpStatus.OK);
     }
  }

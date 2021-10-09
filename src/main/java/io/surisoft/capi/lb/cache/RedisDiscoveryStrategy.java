@@ -229,7 +229,6 @@ public class RedisDiscoveryStrategy extends AbstractDiscoveryStrategy {
 
     private CapiNode capiNode = new CapiNode();
 
-
     public RedisDiscoveryStrategy(DiscoveryNode discoveryNode, ILogger logger, Map<String, Comparable> properties, RedisTemplate redisTemplate) {
         super(logger, properties);
         this.redisTemplate = redisTemplate;

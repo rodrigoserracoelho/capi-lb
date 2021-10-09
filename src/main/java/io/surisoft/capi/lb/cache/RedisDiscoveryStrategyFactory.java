@@ -213,6 +213,7 @@ import com.hazelcast.spi.discovery.DiscoveryStrategyFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 public class RedisDiscoveryStrategyFactory implements DiscoveryStrategyFactory {
@@ -235,6 +236,6 @@ public class RedisDiscoveryStrategyFactory implements DiscoveryStrategyFactory {
 
     @Override
     public Collection<PropertyDefinition> getConfigurationProperties() {
-        return null;
+        return List.of();
     }
 }

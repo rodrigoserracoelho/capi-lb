@@ -208,22 +208,17 @@ package io.surisoft.capi.lb.configuration;
 import io.surisoft.capi.lb.cache.RunningApiManager;
 import io.surisoft.capi.lb.processor.MetricsProcessor;
 import io.surisoft.capi.lb.schema.Api;
-import io.surisoft.capi.lb.schema.RunningApi;
 import io.surisoft.capi.lb.utils.Constants;
 import io.surisoft.capi.lb.utils.RouteUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.builder.RouteBuilder;
-import org.apache.camel.model.DescriptionDefinition;
 import org.apache.camel.model.RouteDefinition;
-import org.apache.camel.model.rest.RestBindingDefinition;
-import org.apache.camel.model.rest.VerbDefinition;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 
 @Component
