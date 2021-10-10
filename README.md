@@ -6,6 +6,9 @@
 Create the cluster
 ```
 $ eksctl create cluster -f capi-eks-cluster.yaml 
+```
+Grab a cup of coffee, it will take a while...
+```
 $ eksctl utils associate-iam-oidc-provider --region eu-west-1 --cluster capi-demo-1 --approve
 ```
 Apply IAM Policies for Ingress Controller
