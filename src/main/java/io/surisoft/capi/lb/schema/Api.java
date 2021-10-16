@@ -229,4 +229,5 @@ public class Api implements Serializable {
     private int connectTimeout;
     private int socketTimeout;
     private int maximumFailoverAttempts;
+    private boolean removeMe;
 }

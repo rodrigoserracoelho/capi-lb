@@ -332,6 +332,60 @@ public class ApiManager {
         return new ResponseEntity<>(api, HttpStatus.OK);
     }
 
+    @DeleteMapping(path="/refresh/mapping/node")
+    public ResponseEntity<Api> deleteMapping(@RequestBody Api api) {
+        if(!isNodeInfoValid(api)) {
+            return new  ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+        String apiId = apiUtils.getApiId(api);
+        Api existingApi = (Api) redisTemplate.opsForHash().get(Api.CLIENT_KEY, apiId);
+        if(existingApi == null) {
+            return new  ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+        if(api.isRemoveMe()) {
+            existingApi.getMappingList().remove(api.getMappingList().get(0));
+            if(existingApi.getMappingList().isEmpty()) {
+                if(existingApi.getHttpMethod().equals(HttpMethod.ALL)) {
+                    //update all
+                    List<String> routeIdList = routeUtils.getAllRouteIdForAGivenApi(api);
+                    for(String routeId : routeIdList) {
+                        runningApiManager.deleteRunningApi(routeId);
+                    }
+                } else {
+                    runningApiManager.deleteRunningApi(routeUtils.getRouteId(api, api.getHttpMethod().getMethod()));
+                }
+                redisTemplate.opsForHash().delete(Api.CLIENT_KEY, existingApi.getId());
+            } else {
+                redisTemplate.opsForHash().put(Api.CLIENT_KEY, existingApi.getId(), existingApi);
+                if(existingApi.getHttpMethod().equals(HttpMethod.ALL)) {
+                    //update all
+                    List<String> routeIdList = routeUtils.getAllRouteIdForAGivenApi(api);
+                    for(String routeId : routeIdList) {
+                        runningApiManager.updateRunningApi(routeId);
+                    }
+                } else {
+                    runningApiManager.updateRunningApi(routeUtils.getRouteId(api, api.getHttpMethod().getMethod()));
+                }
+            }
+        } else {
+            //delete all
+            if(existingApi.getHttpMethod().equals(HttpMethod.ALL)) {
+                //update all
+                List<String> routeIdList = routeUtils.getAllRouteIdForAGivenApi(api);
+                for(String routeId : routeIdList) {
+                    runningApiManager.deleteRunningApi(routeId);
+                }
+            } else {
+                runningApiManager.deleteRunningApi(routeUtils.getRouteId(api, api.getHttpMethod().getMethod()));
+            }
+            redisTemplate.opsForHash().delete(Api.CLIENT_KEY, existingApi.getId());
+
+        }
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
     private boolean isNodeInfoValid(Api api) {
         if(api == null || api.getContext() == null || api.getName() == null || api.getMappingList() == null || api.getMappingList().isEmpty()) {
             return false;
