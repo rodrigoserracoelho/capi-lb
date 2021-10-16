@@ -206,5 +206,23 @@
 package io.surisoft.capi.lb.schema;
 
 public enum HttpMethod {
-    ALL,GET,POST,PUT,DELETE
+    ALL("all"),
+    GET("get"),
+    POST("post"),
+    PUT("put"),
+    DELETE("delete");
+
+    private String method;
+    HttpMethod(String method) {
+        this.method = method;
+    }
+
+    public String getMethod() {
+        return this.method;
+    }
+
+    public void setMethod(String method) {
+        this.method = method;
+    }
+
 }

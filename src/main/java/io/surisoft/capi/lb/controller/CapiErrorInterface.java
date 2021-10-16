@@ -206,6 +206,7 @@
 package io.surisoft.capi.lb.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.camel.util.json.JsonObject;
 import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -227,12 +228,21 @@ public class CapiErrorInterface implements ErrorController {
             log.trace("Handling error: {}", statusCode);
 
             if(statusCode == HttpStatus.NOT_FOUND.value()) {
-                return new ResponseEntity<>("error-404", HttpStatus.NOT_FOUND);
+                JsonObject jsonObject = new JsonObject();
+                jsonObject.put("errorMessage", "The requested route was not found, please try again later on.");
+                jsonObject.put("errorCode", statusCode);
+                return new ResponseEntity<>(jsonObject.toJson(), HttpStatus.NOT_FOUND);
+            } else {
+                JsonObject jsonObject = new JsonObject();
+                jsonObject.put("errorMessage", "The requested route is not available, please try again later on.");
+                jsonObject.put("errorCode", HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>(jsonObject.toJson(), HttpStatus.BAD_REQUEST);
             }
-            else if(statusCode == HttpStatus.INTERNAL_SERVER_ERROR.value()) {
-                return new ResponseEntity<>("error-500", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-        }
-       return new ResponseEntity<>("error-500", HttpStatus.INTERNAL_SERVER_ERROR);
+
+       }
+       JsonObject jsonObject = new JsonObject();
+       jsonObject.put("errorMessage", "The requested route is not available, please try again later on.");
+       jsonObject.put("errorCode", HttpStatus.BAD_REQUEST);
+       return new ResponseEntity<>(jsonObject.toJson(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

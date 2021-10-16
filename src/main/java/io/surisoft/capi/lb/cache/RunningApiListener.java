@@ -242,10 +242,9 @@ public class RunningApiListener implements EntryEvictedListener<String, RunningA
             RunningApi runningApi = event.getValue();
             log.info("Removing route: {} for updating", runningApi.getRouteId());
             try {
-                camelContext.getRouteController().stopRoute(runningApi.getRouteId());
+                Api api = (Api) redisTemplate.opsForHash().get(Api.CLIENT_KEY, runningApi.getApiId());
                 camelContext.removeRoute(runningApi.getRouteId());
-                Api api = (Api) redisTemplate.opsForHash().get(Api.CLIENT_KEY, event.getValue().getApiId());
-                camelContext.addRoutes(new SingleRouteProcessor(camelContext, api, routeUtils, runningApiManager));
+                camelContext.addRoutes(new SingleRouteProcessor(camelContext, api, routeUtils, runningApi));
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
@@ -254,17 +253,18 @@ public class RunningApiListener implements EntryEvictedListener<String, RunningA
 
     @Override
     public void entryAdded(EntryEvent<String, RunningApi> entryEvent) {
-        log.trace("New entry detected: {}", entryEvent.getMember().localMember());
-        if(!entryEvent.getMember().localMember()) {
+        RunningApi runningApi = entryEvent.getValue();
+        //if(!entryEvent.getMember().localMember()) {
+            log.trace("Api with id: {} detected, deploying the route.", runningApi.getApiId());
             try {
-                Api api = (Api) redisTemplate.opsForHash().get(Api.CLIENT_KEY, entryEvent.getValue().getApiId());
-                camelContext.addRoutes(new SingleRouteProcessor(camelContext, api, routeUtils, runningApiManager));
+                Api api = (Api) redisTemplate.opsForHash().get(Api.CLIENT_KEY, runningApi.getApiId());
+                camelContext.addRoutes(new SingleRouteProcessor(camelContext, api, routeUtils, runningApi));
             } catch (Exception e) {
                log.error(e.getMessage(), e);
             }
-        } else {
-            log.trace("New entry was deployed by this CAPI instance, skipping Camel Route.");
-        }
+       // } else {
+        //    log.trace("Api with id: {} was deployed by this CAPI instance, skipping Camel Route.", runningApi.getApiId());
+       // }
     }
 
     @Override

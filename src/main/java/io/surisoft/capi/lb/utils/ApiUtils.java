@@ -206,6 +206,7 @@
 package io.surisoft.capi.lb.utils;
 
 import io.surisoft.capi.lb.schema.Api;
+import io.surisoft.capi.lb.schema.HttpMethod;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.util.json.JsonObject;
 import org.springframework.stereotype.Component;
@@ -220,6 +221,12 @@ public class ApiUtils {
         JsonObject jsonObject = new JsonObject();
         jsonObject.put("apiName", api.getName());
         jsonObject.put("apiContext", api.getContext());
+        if(api.getHttpMethod() == null || api.getHttpMethod().equals(HttpMethod.ALL)) {
+            api.setHttpMethod(HttpMethod.ALL);
+            jsonObject.put("httpMethod", HttpMethod.ALL);
+        } else {
+            jsonObject.put("httpMethod", api.getHttpMethod().getMethod());
+        }
         return new String(Base64.getEncoder().encode(jsonObject.toJson().getBytes()));
     }
 }

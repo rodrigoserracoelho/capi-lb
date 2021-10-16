@@ -216,6 +216,7 @@ public class Api implements Serializable {
     public static final String CLIENT_KEY = "Api";
 
     private String id;
+    private String routeId;
     private String name;
     private String context;
     private List<Mapping> mappingList = new ArrayList<>();

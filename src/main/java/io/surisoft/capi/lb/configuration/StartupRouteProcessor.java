@@ -206,24 +206,21 @@
 package io.surisoft.capi.lb.configuration;
 
 import io.surisoft.capi.lb.cache.RunningApiManager;
-import io.surisoft.capi.lb.processor.MetricsProcessor;
 import io.surisoft.capi.lb.schema.Api;
-import io.surisoft.capi.lb.utils.Constants;
+import io.surisoft.capi.lb.schema.HttpMethod;
 import io.surisoft.capi.lb.utils.RouteUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.camel.builder.RouteBuilder;
-import org.apache.camel.model.RouteDefinition;
+import org.apache.camel.CamelContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
+import javax.annotation.PostConstruct;
 import java.util.List;
-
 
 @Component
 @Slf4j
-public class GlobalRouteProcessor extends RouteBuilder {
+public class StartupRouteProcessor {
 
     @Autowired
     private RedisTemplate redisTemplate;
@@ -232,67 +229,44 @@ public class GlobalRouteProcessor extends RouteBuilder {
     private RouteUtils routeUtils;
 
     @Autowired
-    private RunningApiManager runningApiManager;
+    private CamelContext camelContext;
 
     @Autowired
-    private MetricsProcessor metricsProcessor;
+    private RunningApiManager runningApiManager;
 
-    @Override
-    public void configure() {
+
+    @PostConstruct
+    public void getPersistedRoutes() {
         List<Api> apiList = redisTemplate.opsForHash().values(Api.CLIENT_KEY);
         for(Api api : apiList) {
-            List<RouteDefinition> routeDefinitionList = routeDefinition(api);
-            for(RouteDefinition routeDefinition : routeDefinitionList) {
-                String routeId = routeUtils.getRouteId(api, routeUtils.getMethodFromRoute(routeDefinition));
-                log.trace("Trying to build and deploy route {}, from CAPI member {}", routeId, runningApiManager.getMemberPublicAddress());
-                routeUtils.buildOnExceptionDefinition(routeDefinition, false, false, false, routeId);
-                 if(api.isFailoverEnabled()) {
-                    routeDefinition
-                            .process(metricsProcessor)
-                            .loadBalance()
-                            .failover(api.getMaximumFailoverAttempts(), false, api.isRoundRobinEnabled(), false)
-                            .to(routeUtils.buildEndpoints(api))
-                            .routeId(routeId);
-                    routeUtils.registerMetric(routeId);
-                    runningApiManager.runApi(routeId, api, routeUtils.getMethodFromRoute(routeDefinition));
+            if(api.getHttpMethod().equals(HttpMethod.ALL)) {
+                List<String> routeIdList = routeUtils.getAllRouteIdForAGivenApi(api);
+                for(String routeId : routeIdList) {
+                    if(runningApiManager.getRunningApiByRouteId(routeId) != null) {
+                        try {
+                            log.trace("Running API with route ID: {}, already cached, deploying the route.", routeId);
+                            camelContext.addRoutes(new SingleRouteProcessor(camelContext, api, routeUtils, runningApiManager.getRunningApiByRouteId(routeId)));
+                        } catch (Exception e) {
+                            log.error(e.getMessage());
+                        }
+                    } else {
+                        runningApiManager.runApi(routeId, api, routeUtils.getMethodFromRouteId(routeId));
+                    }
+                }
+            } else {
+                String routeId = routeUtils.getRouteId(api, api.getHttpMethod().getMethod());
+                if(runningApiManager.getRunningApiByRouteId(routeId) != null) {
+                    try {
+                        log.trace("Running API with route ID: {}, already cached, deploying the route.", routeId);
+                        camelContext.addRoutes(new SingleRouteProcessor(camelContext, api, routeUtils, runningApiManager.getRunningApiByRouteId(routeId)));
+                    } catch (Exception e) {
+                        log.error(e.getMessage());
+                    }
+
                 } else {
-                     routeDefinition
-                             .process(metricsProcessor)
-                             .loadBalance()
-                             .roundRobin()
-                             .to(routeUtils.buildEndpoints(api))
-                             .routeId(routeId);
-                     routeUtils.registerMetric(routeId);
-                     runningApiManager.runApi(routeId, api, routeUtils.getMethodFromRoute(routeDefinition));
-                 }
-
+                    runningApiManager.runApi(routeUtils.getRouteId(api, api.getHttpMethod().getMethod()), api);
+                }
             }
-
         }
-    }
-
-    private List<RouteDefinition> routeDefinition(Api api) {
-        List<RouteDefinition> routeDefinitionList = new ArrayList<>();
-        switch (api.getHttpMethod()) {
-            case ALL:
-                routeDefinitionList.add(rest().get(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route());
-                routeDefinitionList.add(rest().post(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route());
-                routeDefinitionList.add(rest().put(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route());
-                routeDefinitionList.add(rest().delete(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route());
-                break;
-            case GET:
-                routeDefinitionList.add(rest().get(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route());
-                break;
-            case POST:
-                routeDefinitionList.add(rest().post(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route());
-                break;
-            case PUT:
-                routeDefinitionList.add(rest().put(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route());
-                break;
-            case DELETE:
-                routeDefinitionList.add(rest().delete(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route());
-                break;
-        }
-        return routeDefinitionList;
     }
 }

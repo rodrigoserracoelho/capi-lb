@@ -214,6 +214,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.model.RouteDefinition;
 import org.apache.camel.model.rest.*;
 import org.apache.camel.util.json.JsonObject;
+import org.apache.camel.util.json.Jsonable;
+import org.apache.camel.util.json.Jsoner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -303,7 +305,7 @@ public class RouteUtils {
         return null;
     }
 
-    public String getRouteId(Api api, HttpMethod httpMethod) {
+    public String getRouteId(Api api, String httpMethod) {
         JsonObject jsonObject = new JsonObject();
         jsonObject.put("apiName", api.getName());
         jsonObject.put("apiContext", api.getContext());
@@ -311,4 +313,28 @@ public class RouteUtils {
         return new String(Base64.getEncoder().encode(jsonObject.toJson().getBytes()));
     }
 
+    public List<String> getAllRouteIdForAGivenApi(Api api) {
+        List<String> routeIdList = new ArrayList<>();
+        routeIdList.add(getRouteId(api, HttpMethod.DELETE.getMethod()));
+        routeIdList.add(getRouteId(api, HttpMethod.PUT.getMethod()));
+        routeIdList.add(getRouteId(api, HttpMethod.POST.getMethod()));
+        routeIdList.add(getRouteId(api, HttpMethod.GET.getMethod()));
+        return routeIdList;
+    }
+
+    public String getMethodFromRouteId(String routeId) {
+        String decodedRouteId = new String(Base64.getDecoder().decode(routeId.getBytes()));
+        JsonObject routeIdObject = Jsoner.deserialize(decodedRouteId, new JsonObject());
+        return routeIdObject.getString("httpMethod");
+    }
+
+    public Api setApiDefaults(Api api) {
+        api.setConnectTimeout(5000);
+        api.setFailoverEnabled(true);
+        api.setMatchOnUriPrefix(true);
+        api.setRoundRobinEnabled(true);
+        api.setMaximumFailoverAttempts(1);
+        api.setSocketTimeout(5000);
+        return api;
+    }
 }

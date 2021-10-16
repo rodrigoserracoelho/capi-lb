@@ -210,6 +210,7 @@ import com.hazelcast.map.IMap;
 import io.surisoft.capi.lb.schema.Api;
 import io.surisoft.capi.lb.schema.HttpMethod;
 import io.surisoft.capi.lb.schema.RunningApi;
+import io.surisoft.capi.lb.utils.RouteUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -229,6 +230,7 @@ public class RunningApiManager {
     @Autowired
     private RunningApiListener runningApiListener;
 
+
     @PostConstruct
     public void addListener() {
         getCachedApi().addEntryListener(runningApiListener, true );
@@ -238,7 +240,7 @@ public class RunningApiManager {
         return hazelcastInstance.getMap(CacheConstants.RUNNING_API_IMAP_NAME);
     }
 
-    public void runApi(String routeId, Api api, HttpMethod method) {
+    public void runApi(String routeId, Api api, String method) {
         if(getRunningApiByRouteId(routeId) == null) {
             log.info("Adding API definition to run time cache.");
             RunningApi runningApi = new RunningApi();
@@ -251,7 +253,34 @@ public class RunningApiManager {
         } else {
             log.info("API Definition already Cached for run time.");
         }
+    }
 
+    public void runApi(String routeId, Api api) {
+        if(getRunningApiByRouteId(routeId) == null) {
+            log.info("Adding API definition to run time cache.");
+            RunningApi runningApi = new RunningApi();
+            runningApi.setApiId(api.getId());
+            runningApi.setContext(api.getContext());
+            runningApi.setName(api.getName());
+            runningApi.setRouteId(routeId);
+            runningApi.setHttpMethod(api.getHttpMethod().getMethod());
+            getCachedApi().put(routeId, runningApi);
+        } else {
+            log.info("API Definition already Cached for run time.");
+        }
+    }
+
+    public void runApi(List<String> routeIdList, Api api, RouteUtils routeUtils) {
+        for(String routeId : routeIdList) {
+            log.info("Adding API definition to run time cache.");
+            RunningApi runningApi = new RunningApi();
+            runningApi.setApiId(api.getId());
+            runningApi.setContext(api.getContext());
+            runningApi.setName(api.getName());
+            runningApi.setRouteId(routeId);
+            runningApi.setHttpMethod(routeUtils.getMethodFromRouteId(routeId));
+            getCachedApi().put(routeId, runningApi);
+        }
     }
 
     public RunningApi getRunningApiByRouteId(String routeId) {
@@ -260,6 +289,12 @@ public class RunningApiManager {
         } else {
             return null;
         }
+    }
+
+    public void updateRunningApi(String routeId) {
+        RunningApi runningApi = getRunningApiByRouteId(routeId);
+        runningApi.setUpdated(runningApi.getUpdated() + 1);
+        getCachedApi().put(routeId, runningApi);
     }
 
     public Collection<RunningApi> getRunningApiByApiDefinition(Api api) {
@@ -275,6 +310,10 @@ public class RunningApiManager {
 
     public void deleteRunningApi(RunningApi runningApi) {
         getCachedApi().remove(runningApi.getRouteId());
+    }
+
+    public void deleteRunningApi(String routeId) {
+        getCachedApi().remove(routeId);
     }
 
     public Collection<RunningApi> getRunningApi() {

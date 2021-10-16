@@ -215,6 +215,7 @@ public class RunningApi implements Serializable {
     private String routeId;
     private String name;
     private String context;
-    private HttpMethod httpMethod;
+    private String httpMethod;
+    private int updated;
 
 }

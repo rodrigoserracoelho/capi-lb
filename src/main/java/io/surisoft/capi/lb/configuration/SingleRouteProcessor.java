@@ -205,17 +205,14 @@
 
 package io.surisoft.capi.lb.configuration;
 
-import io.surisoft.capi.lb.cache.RunningApiManager;
 import io.surisoft.capi.lb.schema.Api;
+import io.surisoft.capi.lb.schema.RunningApi;
 import io.surisoft.capi.lb.utils.Constants;
 import io.surisoft.capi.lb.utils.RouteUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.CamelContext;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.RouteDefinition;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Slf4j
 public class SingleRouteProcessor extends RouteBuilder {
@@ -224,65 +221,56 @@ public class SingleRouteProcessor extends RouteBuilder {
 
     private Api api;
 
-    private RunningApiManager runningApiManager;
+    private RunningApi runningApi;
 
-    public SingleRouteProcessor(CamelContext camelContext, Api api, RouteUtils routeUtils, RunningApiManager runningApiManager) {
+    public SingleRouteProcessor(CamelContext camelContext, Api api, RouteUtils routeUtils, RunningApi runningApi) {
         super(camelContext);
         this.api = api;
         this.routeUtils = routeUtils;
-        this.runningApiManager = runningApiManager;
+        this.runningApi = runningApi;
     }
 
     @Override
     public void configure() {
-        List<RouteDefinition> routeDefinitionList = routeDefinition(api);
-        for(RouteDefinition routeDefinition : routeDefinitionList) {
-            String routeId = routeUtils.getRouteId(api, routeUtils.getMethodFromRoute(routeDefinition));
-            log.trace("Trying to build and deploy route {}, from CAPI member {}", routeId, runningApiManager.getMemberPublicAddress());
-            routeUtils.buildOnExceptionDefinition(routeDefinition, false, false, false, routeId);
-             if(api.isFailoverEnabled()) {
-                routeDefinition
-                        .loadBalance()
-                        .failover(api.getMaximumFailoverAttempts(), false, api.isRoundRobinEnabled(), false)
-                        .to(routeUtils.buildEndpoints(api))
-                        .end()
-                        .routeId(routeId);
-                 routeUtils.registerMetric(routeId);
-            } else {
-                 routeDefinition
-                         .loadBalance()
-                         .roundRobin()
-                         .to(routeUtils.buildEndpoints(api))
-                         .end()
-                         .routeId(routeId);
-                 routeUtils.registerMetric(routeId);
-             }
-            runningApiManager.runApi(routeId, api, routeUtils.getMethodFromRoute(routeDefinition));
+        RouteDefinition routeDefinition = getRouteDefinition(api, runningApi);
+        String routeId = routeUtils.getRouteId(api, runningApi.getHttpMethod());
+        routeUtils.setApiDefaults(api);
+        log.trace("Trying to build and deploy route {}", routeId);
+        routeUtils.buildOnExceptionDefinition(routeDefinition, false, false, false, routeId);
+        if(api.isFailoverEnabled()) {
+            routeDefinition
+                    .loadBalance()
+                    .failover(api.getMaximumFailoverAttempts(), false, api.isRoundRobinEnabled(), false)
+                    .to(routeUtils.buildEndpoints(api))
+                    .end()
+                    .routeId(routeId);
+        } else {
+             routeDefinition
+                     .loadBalance()
+                     .roundRobin()
+                     .to(routeUtils.buildEndpoints(api))
+                     .end()
+                     .routeId(routeId);
         }
+        routeUtils.registerMetric(routeId);
     }
 
-    private List<RouteDefinition> routeDefinition(Api api) {
-        List<RouteDefinition> routeDefinitionList = new ArrayList<>();
-        switch (api.getHttpMethod()) {
-            case ALL:
-                routeDefinitionList.add(rest().get(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route());
-                routeDefinitionList.add(rest().post(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route());
-                routeDefinitionList.add(rest().put(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route());
-                routeDefinitionList.add(rest().delete(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route());
+    private RouteDefinition getRouteDefinition(Api api, RunningApi runningApi) {
+        RouteDefinition routeDefinition = null;
+        switch (runningApi.getHttpMethod()) {
+            case "get":
+                routeDefinition = rest().get(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route();
                 break;
-            case GET:
-                routeDefinitionList.add(rest().get(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route());
+            case "post":
+                routeDefinition = rest().post(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route();
                 break;
-            case POST:
-                routeDefinitionList.add(rest().post(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route());
+            case "put":
+                routeDefinition = rest().put(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route();
                 break;
-            case PUT:
-                routeDefinitionList.add(rest().put(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route());
-                break;
-            case DELETE:
-                routeDefinitionList.add(rest().delete(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route());
+            case "delete":
+                routeDefinition = rest().delete(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route();
                 break;
         }
-        return routeDefinitionList;
+        return routeDefinition;
     }
 }

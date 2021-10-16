@@ -230,15 +230,8 @@ public class RouteManager {
     private RunningApiManager runningApiManager;
 
     @GetMapping
-    public ResponseEntity<String> getRoutes() {
+    public ResponseEntity<Collection<RunningApi>> getRoutes() {
         Collection<RunningApi> runningApiManagers = runningApiManager.getRunningApi();
-        for(RunningApi r : runningApiManagers) {
-            try {
-                camelContext.getRouteController().stopRoute(r.getRouteId());
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-            }
-        }
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(runningApiManagers, HttpStatus.OK);
     }
  }

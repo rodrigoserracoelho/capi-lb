@@ -206,8 +206,9 @@
 package io.surisoft.capi.lb.controller;
 
 import io.surisoft.capi.lb.cache.RunningApiManager;
-import io.surisoft.capi.lb.configuration.SingleRouteProcessor;
 import io.surisoft.capi.lb.schema.Api;
+import io.surisoft.capi.lb.schema.HttpMethod;
+import io.surisoft.capi.lb.schema.Mapping;
 import io.surisoft.capi.lb.schema.RunningApi;
 import io.surisoft.capi.lb.utils.ApiUtils;
 import io.surisoft.capi.lb.utils.RouteUtils;
@@ -219,7 +220,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 @RestController
 @RequestMapping("/manager/api")
@@ -277,7 +280,7 @@ public class ApiManager {
        api.setId(apiId);
        redisTemplate.opsForHash().put(Api.CLIENT_KEY, apiId, api);
        try {
-           camelContext.addRoutes(new SingleRouteProcessor(camelContext, api, routeUtils, runningApiManager));
+           //camelContext.addRoutes(new SingleRouteProcessor(camelContext, api, routeUtils, runningApiManager));
        } catch (Exception e) {
            log.error(e.getMessage(), e);
            redisTemplate.opsForHash().delete(Api.CLIENT_KEY, api);
@@ -286,12 +289,66 @@ public class ApiManager {
        return new ResponseEntity<>(api, HttpStatus.CREATED);
     }
 
-    @PostMapping(path="/refresh/mapping")
-    public ResponseEntity<Api> refreshMapping(@RequestBody Api api) {
-        if(redisTemplate.opsForHash().get(Api.CLIENT_KEY, api.getName()) == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    @PostMapping(path="/refresh/mapping/node")
+    public ResponseEntity<Api> newNodeMapping(@RequestBody Api api) {
+        if(!isNodeInfoValid(api)) {
+           return new  ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        redisTemplate.opsForHash().put(Api.CLIENT_KEY, api.getName(), api);
-        return new ResponseEntity<>(api, HttpStatus.CREATED);
+
+        String apiId = apiUtils.getApiId(api);
+        Api existingApi = (Api) redisTemplate.opsForHash().get(Api.CLIENT_KEY, apiId);
+        if(existingApi != null) {
+            log.trace("Updating existng Api: {}", existingApi.getId());
+            List<Mapping> apiCallMappingList = api.getMappingList();
+            List<Mapping> newMappingList = new ArrayList<>();
+            for(Mapping mapping : apiCallMappingList) {
+                if(isMappingNew(existingApi, mapping)) {
+                    newMappingList.add(mapping);
+                }
+            }
+            for(Mapping mapping : newMappingList) {
+                existingApi.getMappingList().add(mapping);
+            }
+            redisTemplate.opsForHash().put(Api.CLIENT_KEY, existingApi.getId(), existingApi);
+            if(api.getHttpMethod().equals(HttpMethod.ALL)) {
+                //update all
+                List<String> routeIdList = routeUtils.getAllRouteIdForAGivenApi(api);
+                for(String routeId : routeIdList) {
+                    runningApiManager.updateRunningApi(routeId);
+                }
+            } else {
+                runningApiManager.updateRunningApi(routeUtils.getRouteId(api, api.getHttpMethod().getMethod()));
+            }
+            return new ResponseEntity<>(api, HttpStatus.OK);
+        }
+
+        api.setId(apiId);
+        redisTemplate.opsForHash().put(Api.CLIENT_KEY, api.getId(), api);
+        if(api.getHttpMethod().equals(HttpMethod.ALL)) {
+            runningApiManager.runApi(routeUtils.getAllRouteIdForAGivenApi(api), api, routeUtils);
+        } else {
+            runningApiManager.runApi(routeUtils.getRouteId(api, api.getHttpMethod().getMethod()), api);
+        }
+        return new ResponseEntity<>(api, HttpStatus.OK);
+    }
+
+    private boolean isNodeInfoValid(Api api) {
+        if(api == null || api.getContext() == null || api.getName() == null || api.getMappingList() == null || api.getMappingList().isEmpty()) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    private boolean isMappingNew(Api existingApi, Mapping mapping) {
+        for(Mapping existingMapping : existingApi.getMappingList()) {
+            if(!existingMapping.getHostname().equals(mapping.getHostname())) {
+               return true;
+            }
+            if(!(existingMapping.getPort() == mapping.getPort())) {
+                return true;
+            }
+        }
+        return false;
     }
 }
