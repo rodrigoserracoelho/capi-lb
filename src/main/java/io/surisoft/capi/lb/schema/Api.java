@@ -229,5 +229,8 @@ public class Api implements Serializable {
     private int connectTimeout;
     private int socketTimeout;
     private int maximumFailoverAttempts;
+    private boolean stickySession;
+    private String stickySessionParam;
+    private boolean stickySessionParamInCookie;
     private boolean removeMe;
 }

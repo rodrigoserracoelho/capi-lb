@@ -231,9 +231,6 @@ public class RunningApiListener implements EntryEvictedListener<String, RunningA
     private RouteUtils routeUtils;
 
     @Autowired
-    private RunningApiManager runningApiManager;
-
-    @Autowired
     private RedisTemplate redisTemplate;
 
     @Override
@@ -244,7 +241,7 @@ public class RunningApiListener implements EntryEvictedListener<String, RunningA
             try {
                 Api api = (Api) redisTemplate.opsForHash().get(Api.CLIENT_KEY, runningApi.getApiId());
                 camelContext.removeRoute(runningApi.getRouteId());
-                camelContext.addRoutes(new SingleRouteProcessor(camelContext, api, routeUtils, runningApi));
+                camelContext.addRoutes(new SingleRouteProcessor(camelContext, api, routeUtils, runningApi, redisTemplate));
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
@@ -258,7 +255,7 @@ public class RunningApiListener implements EntryEvictedListener<String, RunningA
             log.trace("Api with id: {} detected, deploying the route.", runningApi.getApiId());
             try {
                 Api api = (Api) redisTemplate.opsForHash().get(Api.CLIENT_KEY, runningApi.getApiId());
-                camelContext.addRoutes(new SingleRouteProcessor(camelContext, api, routeUtils, runningApi));
+                camelContext.addRoutes(new SingleRouteProcessor(camelContext, api, routeUtils, runningApi, redisTemplate));
             } catch (Exception e) {
                log.error(e.getMessage(), e);
             }

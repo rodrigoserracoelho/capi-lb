@@ -205,6 +205,7 @@
 
 package io.surisoft.capi.lb.configuration;
 
+import io.surisoft.capi.lb.processor.SessionChecker;
 import io.surisoft.capi.lb.schema.Api;
 import io.surisoft.capi.lb.schema.RunningApi;
 import io.surisoft.capi.lb.utils.Constants;
@@ -213,38 +214,46 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.CamelContext;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.RouteDefinition;
+import org.springframework.data.redis.core.RedisTemplate;
 
 @Slf4j
 public class SingleRouteProcessor extends RouteBuilder {
 
     private RouteUtils routeUtils;
-
     private Api api;
-
     private RunningApi runningApi;
+    private RedisTemplate redisTemplate;
 
-    public SingleRouteProcessor(CamelContext camelContext, Api api, RouteUtils routeUtils, RunningApi runningApi) {
+    public SingleRouteProcessor(CamelContext camelContext, Api api, RouteUtils routeUtils, RunningApi runningApi, RedisTemplate redisTemplate) {
         super(camelContext);
         this.api = api;
         this.routeUtils = routeUtils;
         this.runningApi = runningApi;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
     public void configure() {
         RouteDefinition routeDefinition = getRouteDefinition(api, runningApi);
         String routeId = routeUtils.getRouteId(api, runningApi.getHttpMethod());
-        routeUtils.setApiDefaults(api);
+        //routeUtils.setApiDefaults(api);
         log.trace("Trying to build and deploy route {}", routeId);
         routeUtils.buildOnExceptionDefinition(routeDefinition, false, false, false, routeId);
         if(api.isFailoverEnabled()) {
             routeDefinition
                     .loadBalance()
-                    .failover(api.getMaximumFailoverAttempts(), false, api.isRoundRobinEnabled(), false)
+                    .failover(1, false, api.isRoundRobinEnabled(), false)
+                    .to(routeUtils.buildEndpoints(api))
+                    .end()
+                    .routeId(routeId);
+        } else if(api.isStickySession()) {
+            routeDefinition
+                    .loadBalance(new SessionChecker(redisTemplate, api.getStickySessionParam(), api.isStickySessionParamInCookie()))
                     .to(routeUtils.buildEndpoints(api))
                     .end()
                     .routeId(routeId);
         } else {
+            log.info("Creating with session checker");
              routeDefinition
                      .loadBalance()
                      .roundRobin()
@@ -257,6 +266,7 @@ public class SingleRouteProcessor extends RouteBuilder {
 
     private RouteDefinition getRouteDefinition(Api api, RunningApi runningApi) {
         RouteDefinition routeDefinition = null;
+        api.setMatchOnUriPrefix(true);
         switch (runningApi.getHttpMethod()) {
             case "get":
                 routeDefinition = rest().get(routeUtils.buildFrom(api) + Constants.MATCH_ON_URI_PREFIX + api.isMatchOnUriPrefix()).route();

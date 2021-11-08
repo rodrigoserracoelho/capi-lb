@@ -240,12 +240,18 @@ public class RedisConfiguration {
     @Value("${redis.port}")
     private int redisPort;
 
+    @Value("${redis.password}")
+    private String redisPassword;
+
     @Bean
     public JedisConnectionFactory connectionFactory() {
         log.trace("Starting Redis Template on host {}, port {}", redisHost, redisPort);
         RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration();
         configuration.setHostName(redisHost);
         configuration.setPort(redisPort);
+        if(redisPassword != null) {
+            configuration.setPassword(redisPassword);
+        }
         return new JedisConnectionFactory(configuration);
     }
 

@@ -245,7 +245,7 @@ public class StartupRouteProcessor {
                     if(runningApiManager.getRunningApiByRouteId(routeId) != null) {
                         try {
                             log.trace("Running API with route ID: {}, already cached, deploying the route.", routeId);
-                            camelContext.addRoutes(new SingleRouteProcessor(camelContext, api, routeUtils, runningApiManager.getRunningApiByRouteId(routeId)));
+                            camelContext.addRoutes(new SingleRouteProcessor(camelContext, api, routeUtils, runningApiManager.getRunningApiByRouteId(routeId), redisTemplate));
                         } catch (Exception e) {
                             log.error(e.getMessage());
                         }
@@ -258,7 +258,7 @@ public class StartupRouteProcessor {
                 if(runningApiManager.getRunningApiByRouteId(routeId) != null) {
                     try {
                         log.trace("Running API with route ID: {}, already cached, deploying the route.", routeId);
-                        camelContext.addRoutes(new SingleRouteProcessor(camelContext, api, routeUtils, runningApiManager.getRunningApiByRouteId(routeId)));
+                        camelContext.addRoutes(new SingleRouteProcessor(camelContext, api, routeUtils, runningApiManager.getRunningApiByRouteId(routeId), redisTemplate));
                     } catch (Exception e) {
                         log.error(e.getMessage());
                     }

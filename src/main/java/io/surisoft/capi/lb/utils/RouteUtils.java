@@ -209,6 +209,7 @@ import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.surisoft.capi.lb.processor.HttpErrorProcessor;
 import io.surisoft.capi.lb.schema.Api;
 import io.surisoft.capi.lb.schema.HttpMethod;
+import io.surisoft.capi.lb.schema.HttpProtocol;
 import io.surisoft.capi.lb.schema.Mapping;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.model.RouteDefinition;
@@ -272,6 +273,9 @@ public class RouteUtils {
     public String[] buildEndpoints(Api api) {
         List<String> transformedEndpointList = new ArrayList<>();
         for(Mapping mapping : api.getMappingList()) {
+            if(api.getHttpProtocol() == null) {
+                api.setHttpProtocol(HttpProtocol.HTTP);
+            }
             String endpoint = api.getHttpProtocol().getProtocol() + "://" + mapping.getHostname() + ":" + mapping.getPort() + mapping.getRootContext() + "?bridgeEndpoint=true&throwExceptionOnFailure=false";
             if(api.getConnectTimeout() > -1) {
                 endpoint = httpUtils.setHttpConnectTimeout(endpoint, api.getConnectTimeout());
@@ -330,7 +334,8 @@ public class RouteUtils {
 
     public Api setApiDefaults(Api api) {
         api.setConnectTimeout(5000);
-        api.setFailoverEnabled(true);
+        //temp to false
+        api.setFailoverEnabled(false);
         api.setMatchOnUriPrefix(true);
         api.setRoundRobinEnabled(true);
         api.setMaximumFailoverAttempts(1);
